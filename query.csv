@@ -1,2 +1,3 @@
 Name,Query,Description,Function
 findAll,{},Query help to find all the data,------
+findAllEqualTo,{fieldName: {$eq: 3}},Query help to find all whose value match with db field value, ------
