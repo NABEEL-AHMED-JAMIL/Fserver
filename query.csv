@@ -2,3 +2,4 @@ Name,Query,Description,Function
 findAll,{},Query help to find all the data,------
 findAllEqualTo,{fieldName: {$eq: 3}},Query help to find all whose value equal to 3, ------
 findAllGreaterThen,{fieldName: {$gt: 3}},Query help to find all whose value grather then 3, --------
+findAllGreaterThenAndEqual,{fieldName: {$gte: 3}},Query help to find all whose value greather then and equal to 3, --------
