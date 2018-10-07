@@ -1,7 +1,8 @@
 package com.ballistic.fserver.restapi;
 //https://stackoverflow.com/questions/21800726/using-spring-mvc-test-to-unit-test-multipart-post-request
-import com.ballistic.fserver.bean.AccountBean;
+import com.ballistic.fserver.dto.AccountBean;
 import com.ballistic.fserver.exception.FileStorageException;
+import com.ballistic.fserver.exception.IllegalBeanFieldException;
 import com.ballistic.fserver.exception.IllegalFileFormatException;
 import com.ballistic.fserver.manager.FileStoreManager;
 import com.ballistic.fserver.manager.ManagerResponse;
@@ -17,13 +18,14 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import static com.ballistic.fserver.validation.ImageFileValidator.isSupportedContentType;
 
 /**
@@ -100,8 +102,6 @@ public class AppRestController {
             error.put("status", HttpStatus.BAD_REQUEST);
             throw new FileStorageException(String.valueOf(error));
         }
-        this.apiResponses = new ArrayList<>();
-
         // Note :- 'here this upload file dto help to collect the non-support file info'
         List<String> wrongTypeFile = files.stream().
             filter(file -> {
@@ -117,6 +117,7 @@ public class AppRestController {
             throw new IllegalFileFormatException("Wrong file type upload " + wrongTypeFile.toString() + " while required => ", "image/jpeg", "image/png", "image/jpg");
         }
 
+        this.apiResponses = new ArrayList<>();
         // file store's one by one
         files.stream().forEach(file -> {
             logger.debug("--------------------------");
@@ -127,17 +128,39 @@ public class AppRestController {
         return new ResponseEntity<>(this.apiResponses, HttpStatus.OK);
     }
 
-    // done test 99.99%
-    @ApiOperation(value = "File upload with object field", response = String.class, produces = "multipart/form-data")
+    // done test 00.99%
+    @ApiOperation(value = "File upload with object field", response = APIResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = String.class),
             @ApiResponse(code = 404, message = "Not Found")})
     @RequestMapping(value = "/save/account/local", method = RequestMethod.POST)
     public ResponseEntity<APIResponse<?>> saveAccountWithSingleFile(
             @ApiParam(name = "account", value = "Select File with Dto field", required = true)
-            @Valid @ModelAttribute AccountBean accountBean) {
+            @Valid AccountBean accountBean, BindingResult bindingResult) throws IllegalBeanFieldException {
+
         long sTime = System.nanoTime();
-        logger.info("file save with account");
+        logger.info("file save with account process");
+        /**
+         * Note :- handle the error in "RestExceptionHandler"
+         * parsing the list of fieldError
+         * */
+        if(bindingResult.hasErrors()) {
+            AtomicInteger bind = new AtomicInteger();
+            HashMap<String, HashMap<String, Object>> error = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(fieldError -> {
+                String key = "key-"+bind;
+                HashMap<String, Object> value = new HashMap<>();
+                value.put("objectName", fieldError.getObjectName());
+                value.put("field", fieldError.getField());
+                value.put("reject", fieldError.getField().equals("file") ?
+                        this.modelMapper.map(fieldError.getRejectedValue(), MultipartFile.class).getOriginalFilename() :
+                        fieldError.getRejectedValue());
+                value.put("message", fieldError.getDefaultMessage());
+                error.put(key, value);
+                bind.getAndIncrement();
+            });
+            throw new IllegalBeanFieldException(error.toString());
+        }
         this.apiResponse = this.uploadFile(accountBean.getFile()).getBody();
 
         if(this.apiResponse.getReturnCode().equals(HttpStatus.OK)) {
@@ -156,15 +179,15 @@ public class AppRestController {
     }
 
 
-    // handle error
+    // done test 00.99%
     @ApiOperation(value = "Files upload with List<object> fields", response = String.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = String.class),
             @ApiResponse(code = 404, message = "Not Found")})
-    @RequestMapping(value = "/save/accounts", method = RequestMethod.POST)
+    @RequestMapping(value = "/save/accounts/local", method = RequestMethod.POST)
     public ResponseEntity<List<APIResponse<?>>> saveAccountWithMultipleFile(
             @ApiParam(name = "account", value = "Select Files with Dto field", required = true)
-            @ModelAttribute(name = "accounts") List<AccountBean> accountBeans) {
+            List<AccountBean> accountBeans) {
 
         //wrongTypeFile
         List<AccountBean> accountWithWrongFile = accountBeans.stream().filter(accountBean -> {
@@ -180,39 +203,64 @@ public class AppRestController {
         logger.info("save's account");
         this.apiResponses = new ArrayList<>();
         accountBeans.stream().forEach(accountBean -> {
-            this.apiResponse = this.saveAccountWithSingleFile(accountBean).getBody();
+            this.apiResponse = this.saveAccountWithSingleFile(accountBean, null).getBody();
             this.apiResponses.add(this.apiResponse);
         });
         logger.info("response :-" + this.apiResponse.getEntity().toString() + " account's save successfully with single file store successfully");
         return new ResponseEntity<List<APIResponse<?>>>(this.apiResponses, HttpStatus.OK);
     }
 
+    // done test 00.99%
+    @ApiOperation(value = "Find Accounts by status", response = String.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success", response = Account.class),
+            @ApiResponse(code = 404, message = "Not Found")})
+    @RequestMapping(value = "/fetch/accounts/local/status={status}", method = RequestMethod.GET)
+    public List<Account> findAllAccountByStatus(@PathVariable(name = "status", required = true) String status) {
+        return null;
+    }
+
+    // done test 00.99%
     // handle error
-    public List<Account> findAllAccountByStatus(String status) {
+    @ApiOperation(value = "Find Account by id", response = String.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success", response = Account.class),
+            @ApiResponse(code = 404, message = "Not Found")})
+    @RequestMapping(value = "/fetch/accounts/accountId={id}", method = RequestMethod.GET)
+    public Optional<Account> fetchAccount(@PathVariable(name = "id", required = true) String id) { return null; }
+
+    // handle error
+    /**
+     * Note:- use pagination
+     */
+    @ApiOperation(value = "Find Accounts", response = String.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success", response = Account.class),
+            @ApiResponse(code = 404, message = "Not Found")})
+    @RequestMapping(value = "/fetch/accounts/local", method = RequestMethod.GET)
+    public List<Account> fetchAllAccounts() {
         return null;
     }
 
     // handle error
-    public Optional<Account> fetchAccount(String id) {
+    @ApiOperation(value = "Delete Account", response = String.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success", response = Account.class),
+            @ApiResponse(code = 404, message = "Not Found")})
+    @RequestMapping(value = "/delete/account/local/accountId={id}", method = RequestMethod.DELETE)
+    public Account deleteAccount(@PathVariable(name = "id", required = true) String id) {
         return null;
     }
 
     // handle error
-    // both save && delete
-    public List<Account> fetchAllAccount() {
-        return null;
-    }
-
-    // handle error
-    public Account deleteAccount(String id) {
-        return null;
-    }
-
-    // handle error
+    @ApiOperation(value = "Find Accounts", response = String.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success", response = Account.class),
+            @ApiResponse(code = 404, message = "Not Found")})
+    @RequestMapping(value = "/delete/accounts/local", method = RequestMethod.POST)
     public List<Account> deleteAccounts(List<String> ids) {
         return null;
     }
-
 
     // done-test 99.99%
     private APIResponse<?> fileProcess(MultipartFile file, long sTime) {
@@ -224,15 +272,15 @@ public class AppRestController {
             logger.info("file upload time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
             fileInfo = this.fileStoreService.getLocalFileStoreService().storeFile(fileInfo);
             logger.info("file data-store time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
-            this.apiResponse = new APIResponse<FileInfo>("File Store :- ", HttpStatus.OK, fileInfo);
-            logger.info("response :-" + this.apiResponse.getEntity().toString() + " file store success fully");
+            this.apiResponse = new APIResponse<FileInfo>("File Store successfully ", HttpStatus.OK, fileInfo);
+            logger.info("response :-" + this.apiResponse.getEntity().toString() + " file store successfully");
         }
 
         return this.apiResponse;
     }
 
     // done-test 99.99%
-    private Boolean isFileValidType(String contentType) throws IllegalArgumentException {
+    private Boolean isFileValidType(String contentType) throws IllegalBeanFieldException {
         if(!isSupportedContentType(contentType)) {
             // sorry repository store support only the image's
             logger.info("file content reject " + contentType);

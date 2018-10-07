@@ -1,4 +1,4 @@
-package com.ballistic.fserver.bean;
+package com.ballistic.fserver.dto;
 
 import com.ballistic.fserver.validation.ValidImage;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -10,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 // done test 100%
+
 @JsonPropertyOrder({ "email", "password", "file" })
 public class AccountBean {
 

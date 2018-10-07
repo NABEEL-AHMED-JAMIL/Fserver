@@ -14,6 +14,8 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import static com.ballistic.fserver.util.SwaggerMessage.*;
+
 
 // done test 100%
 @Configuration
@@ -34,12 +36,13 @@ public class SwaggerConfig {
     }
 
     private ApiInfo apiInfo() {
-        return new ApiInfoBuilder().title("Server API").description("")
-                .termsOfServiceUrl("https://github.com/NABEEL-AHMED-JAMIL")
-                .contact(new Contact("Developers", "https://github.com/NABEEL-AHMED-JAMIL/", "nabeel.amd93@gmail.com"))
-                .license("Open Source")
-                .licenseUrl("https://www.apache.org/licenses/LICENSE-2.0")
-                .version("1.0.0")
+        return new ApiInfoBuilder().title(TITLE)
+                .description(DESCRIPTION)
+                .termsOfServiceUrl(TERMS_OF_SERVICEURL)
+                .contact(new Contact(CONTACT_NAME, CONTACT_URL, CONTACT_EMAIL))
+                .license(LICENSE)
+                .licenseUrl(LICENSE_URL)
+                .version(VERSION)
                 .build();
 
     }

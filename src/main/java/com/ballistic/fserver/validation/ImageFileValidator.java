@@ -18,15 +18,22 @@ public class ImageFileValidator implements ConstraintValidator<ValidImage, Multi
     public boolean isValid(MultipartFile multipartFile, ConstraintValidatorContext context) {
         Boolean result = true;
         logger.info("validation-image-repository");
-        String contentType = multipartFile.getContentType();
-        if(!isSupportedContentType(contentType)) {
-            logger.error("repository not a image" + multipartFile.getContentType());
+        if(multipartFile != null) {
+            String contentType = multipartFile.getContentType();
+            if(!isSupportedContentType(contentType)) {
+                logger.error("file not a image" + multipartFile.getContentType());
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate("Only PNG or JPG image are allowed.").
+                        addConstraintViolation();
+                result = false;
+            }
+        }else {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Only PNG or JPG image are allowed.").
+            context.buildConstraintViolationWithTemplate("File object null pls enter PNG or JPG image.").
                     addConstraintViolation();
             result = false;
         }
-        logger.info("repository valid image");
+        logger.info("file valid image");
         return result;
     }
 

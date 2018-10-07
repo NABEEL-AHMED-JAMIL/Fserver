@@ -56,8 +56,6 @@ public class FileStoreService {
             logger.info("file-delete done");
             return fileInfo;
         }
-
-
     }
 
     @Service

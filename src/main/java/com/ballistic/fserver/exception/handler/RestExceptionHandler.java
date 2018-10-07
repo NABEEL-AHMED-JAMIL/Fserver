@@ -1,5 +1,12 @@
-package com.ballistic.fserver.exception;
+package com.ballistic.fserver.exception.handler;
 
+import com.ballistic.fserver.exception.EntityNotFoundException;
+import com.ballistic.fserver.exception.FileStorageException;
+import com.ballistic.fserver.exception.IllegalBeanFieldException;
+import com.ballistic.fserver.exception.IllegalFileFormatException;
+import com.ballistic.fserver.exception.bean.ApiError;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -26,8 +34,8 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.validation.ConstraintViolationException;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -59,6 +67,26 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
+     * Handle HttpMediaTypeNotSupportedException. This one triggers when JSON is invalid as well.
+     *
+     * @param ex      HttpMediaTypeNotSupportedException
+     * @param headers HttpHeaders
+     * @param status  HttpStatus
+     * @param request WebRequest
+     * @return the ApiError object
+     */
+    @Override
+    protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex,
+              HttpHeaders headers, HttpStatus status, WebRequest request) {
+        StringBuilder error = new StringBuilder();
+        error.append(ex.getContentType());
+        error.append(" media type is not supported. Supported media types are \"image/jpeg\", \"image/png\", \"image/jpg\"");
+        logger.error("Http MediaType " + error);
+        return this.buildResponseEntity(new ApiError(status.UNSUPPORTED_MEDIA_TYPE, error.toString() , ex));
+    }
+
+
+    /**
      * @RequestParam(value = "name", required = true, defaultValue = "defaultName") == work
      * @RequestParam(value = "name", defaultValue = "defaultName") == work (default => required = true)
      * Handle MissingServletRequestPartException. Triggered when a 'required' request parameter is missing.
@@ -71,48 +99,36 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
      */
 
     @Override
-    protected ResponseEntity<Object> handleMissingServletRequestPart(MissingServletRequestPartException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    protected ResponseEntity<Object> handleMissingServletRequestPart(MissingServletRequestPartException ex,
+              HttpHeaders headers, HttpStatus status, WebRequest request) {
         String error = ex.getRequestPartName() + " part is missing";
         logger.error("Missing-Servlet Request Part => " + error);
         return this.buildResponseEntity(new ApiError(status.BAD_REQUEST, error, ex));
      }
 
-    /**
-     * Handle HttpMediaTypeNotSupportedException. This one triggers when JSON is invalid as well.
-     *
-     * @param ex      HttpMediaTypeNotSupportedException
-     * @param headers HttpHeaders
-     * @param status  HttpStatus
-     * @param request WebRequest
-     * @return the ApiError object
-     */
-    @Override
-    protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        StringBuilder error = new StringBuilder();
-        error.append(ex.getContentType());
-        error.append(" media type is not supported. Supported media types are \"image/jpeg\", \"image/png\", \"image/jpg\"");
-        logger.error("Http MidiaType " + error);
-        return this.buildResponseEntity(new ApiError(status.UNSUPPORTED_MEDIA_TYPE, error.toString() , ex));
-    }
 
     /**
      * Handle MethodArgumentNotValidException. Triggered when an object fails @Valid validation.
      *
-     * @param ex      the MethodArgumentNotValidException that is thrown when @Valid validation fails
-     * @param headers HttpHeaders
-     * @param status  HttpStatus
-     * @param request WebRequest
+//     * @param ex      the MethodArgumentNotValidException that is thrown when @Valid validation fails
+//     * @param headers HttpHeaders
+//     * @param status  HttpStatus
+//     * @param request WebRequesthandlerExceptionResolver
      * @return the ApiError object
      */
     @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+              HttpHeaders headers, HttpStatus status, WebRequest request) {
         ApiError apiError = new ApiError(status.BAD_REQUEST);
         apiError.setMessage("Validation error");
+        System.out.println(ex.getBindingResult().getFieldErrors().toString());
         apiError.addValidationErrors(ex.getBindingResult().getFieldErrors());
+        System.out.println(ex.getBindingResult().getGlobalErrors().toString());
         apiError.addValidationError(ex.getBindingResult().getGlobalErrors());
         logger.error("Argument Not Valid :- " + apiError.toString());
         return buildResponseEntity(apiError);
     }
+
 
     /**
      * Handles EntityNotFoundException.
@@ -141,10 +157,60 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> illegalFileFormatException(IllegalFileFormatException ex) {
         ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
         apiError.setMessage("File format error");
+        List list = Arrays.asList(ex.getMessage());
+        System.out.println(list.toString());
         apiError.setDebugMessage(ex.getMessage());
         logger.error("File format error " + ex.getMessage());
         return buildResponseEntity(apiError);
     }
+
+    /**
+     * Handles IllegalArgumentException.
+     * Help to show error related to IllegalBean Field format error
+     * use the costume parse method for parse the error..
+     * to understand this method plz check the method call in AppRestController
+     *
+     * @param ex the EntityNotFoundException
+     * @return the ApiError object
+     */
+    @ExceptionHandler(IllegalBeanFieldException.class)
+    protected ResponseEntity<Object> illegalBeanFieldException(IllegalBeanFieldException ex) throws IOException {
+        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
+        apiError.setMessage("Validation error");
+        apiError.setDebugMessage(ex.getMessage());
+        String error = ex.getMessage();
+//        if(error.charAt(0) == '{' && error.charAt(error.length()-1) == '}') {
+//            error = error.substring(1, error.length()-1); //remove curly brackets
+//            String[] keyValuePairs = error.split(","); //split the string to creat key-value pairs
+//            for(String pair : keyValuePairs) {     //iterate over the pairs
+//                String object = pair.split("=")[1];  //remove curly brackets
+//                if(object.charAt(0) == '{' && object.charAt(error.length()-1) == '}') {
+//                    error = object.substring(1, object.length()-1); //remove curly brackets
+//                    keyValuePairs = error.split(","); //split the string to creat key-value pairs
+//                    String objectName = null;
+//                    String field = null;
+//                    String reject = null;
+//                    String message = null;
+//                    for(String pair1 : keyValuePairs) {     //iterate over the pairs
+//                        String[] entry = pair1.split("=");      //split the pairs to get key and value
+//                        if(entry[0].trim().equals("objectName")) {
+//                            objectName = entry[1].trim();
+//                        } else if (entry[0].trim().equals("field")) {
+//                            field = entry[1].trim();
+//                        } else if (entry[0].trim().equals("reject")) {
+//                            reject = entry[1].trim();
+//                        } else if (entry[0].trim().equals("message")) {
+//                            message = entry[1].trim();
+//                        }
+//                    }
+//                    apiError.addValidationError(objectName, field, reject, message);
+//                }
+//            }
+//        }
+        logger.error("Argument Not Valid :- " + apiError.toString());
+        return buildResponseEntity(apiError);
+    }
+
 
     /**
      * Handles FileStorageException.
@@ -168,15 +234,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 map.put(entry[0].trim(), entry[1].trim());   //add them to the hashmap and trim whitespaces
             }
             error = String.valueOf(map.get("message"));
-            if(map.get("status").equals("500")) {
-                status = HttpStatus.INTERNAL_SERVER_ERROR;
-            }
+            if(map.get("status").equals("500")) { status = HttpStatus.INTERNAL_SERVER_ERROR; }
         }
         ApiError apiError = new ApiError(status);
         apiError.setMessage(error);
-        if(StringUtils.isNotEmpty(ex.getLocalizedMessage())) {
-            apiError.setDebugMessage(ex.getLocalizedMessage());
-        }
+        if(StringUtils.isNotEmpty(ex.getLocalizedMessage())) { apiError.setDebugMessage(ex.getLocalizedMessage()); }
         logger.error("Exception due to => " + error);
         return buildResponseEntity(apiError);
     }
@@ -217,7 +279,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("{}", error);
         return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, error, ex));
     }
-
 
     /**
      * Handle NoHandlerFoundException.
@@ -268,7 +329,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         apiError.setDebugMessage(ex.getMessage());
         return buildResponseEntity(apiError);
     }
-
 
     /**
      * Common resposne builder for Entity
