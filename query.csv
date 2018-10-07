@@ -7,3 +7,4 @@ findAllMatchIn,"{fieldName: {$in: [2,8,1,1000]}}",Query help to find all whose v
 findAllLessThen,{fieldName: {$lt: 3}},Query help to find all whose value less then 3, --------
 findAllLessThenEqual,{fieldName: {$lte: 3}},Query help to find all whose value less then and equal to 3, --------
 findAllNotEqual,{fieldName: {$ne: 3}},Query help to find all whose value not equal to 3,--------
+findAllNotIn,"{fieldName : {$nin : [1,2,3]}}",Query help to fidn all whose value not in give list,--------
