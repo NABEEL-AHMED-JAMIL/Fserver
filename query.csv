@@ -2,8 +2,3 @@ Name,Query,Description,Function
 findAll,{},Query help to find all the data,------
 findAllEqualTo,{fieldName: {$eq: 3}},Query help to find all whose value equal to 3, ------
 findAllGreaterThen,{fieldName: {$gt: 3}},Query help to find all whose value grather then 3, --------
-findAllGreaterThenAndEqual,{fieldName: {$gte: 3}},Query help to find all whose value greather then and equal to 3, --------
-findAllMatchIn,{fieldName: {$in: [2,8,1,1000]}},Query help to find all whose value matchin list, --------
-findAllLessThen,{fieldName: {$lt: 3}},Query help to find all whose value less then 3, --------
-findAllLessThenEqual,{fieldName: {$lte: 3}},Query help to find all whose value less then and equal to 3, --------
-findAllNotEqual,{fieldName: {$ne: 3}},Query help to find all whose value not equal to 3,--------
