@@ -2,9 +2,9 @@ package com.ballistic.fserver.properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.List;
 
 public interface IFProperties {
 
@@ -19,10 +19,13 @@ public interface IFProperties {
             logger.info("local-store-properties-constructor");
         }
 
-        public String getUploadDir() { return uploadDir; }
+        public String getUploadDir() {
+            logger.debug("Fetching Local UploadDir Properties => " + this.uploadDir);
+            return this.uploadDir;
+        }
 
         public void setUploadDir(String uploadDir) {
-            logger.info("Local-upload-Dir => " + uploadDir);
+            logger.debug("Local UploadDir Properties => " + uploadDir);
             this.uploadDir = uploadDir;
         }
 
@@ -34,7 +37,7 @@ public interface IFProperties {
 
     public class ServerStoreProperties {}
 
-    @ConfigurationProperties(prefix = "spring.data.mongodb")
+    @ConfigurationProperties(prefix = "mongodb")
     public class MongoDbStoreProperties {
 
         /**
@@ -47,53 +50,32 @@ public interface IFProperties {
          * 1) mongo.hosts = localhost
          * 2) mongo.hosts = 10.1.1.1,10.1.1.2,10.1.1.3
          */
-        private List<String> hosts;
+        private MongoProperties fserver = new MongoProperties();
+        private MongoProperties server = new MongoProperties();
 
-        /**
-         * The port our Mongo hosts are running on.
-         * Defaults to 27017
-         */
-        private Integer port;
-
-        private String database;
-
-        public MongoDbStoreProperties() {
-            logger.info("mongo-db-store-properties-constructor");
+        public MongoProperties getFserver() {
+            logger.debug("Fetching Fserver Properties => " + this.fserver);
+            return fserver;
         }
 
-        public List<String> getHosts() {
-            logger.info("get-hosts");
-            return hosts;
+        public void setFserver(MongoProperties fserver) {
+            logger.debug("Fserver MongoDb Properties => " + fserver);
+            this.fserver = fserver;
         }
 
-        public void setHosts(List<String> hosts) {
-            logger.info("set-hosts");
-            this.hosts = hosts;
+        public MongoProperties getServer() {
+            logger.debug("Fetching Server Properties => " + this.fserver);
+            return server;
         }
 
-        public Integer getPort() {
-            logger.info("get-port");
-            return port;
-        }
-
-        public void setPort(Integer port) {
-            logger.info("set-port");
-            this.port = port;
-        }
-
-        public String getDatabase() {
-            logger.info("get-database");
-            return database;
-        }
-
-        public void setDatabase(String database) {
-            logger.info("set-database");
-            this.database = database;
+        public void setServer(MongoProperties server) {
+            logger.debug("Server MongoDb Properties => " + fserver);
+            this.server = server;
         }
 
         @Override
         public String toString() {
-            return "MongoDbStoreProperties{" + "hosts=" + hosts + ", port=" + port + ", database='" + database + '\'' + '}';
+            return "MongoDbStoreProperties{" + "fserver=" + fserver + ", server=" + server + '}';
         }
     }
 

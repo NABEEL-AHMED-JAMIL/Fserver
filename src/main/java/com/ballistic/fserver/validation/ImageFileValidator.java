@@ -17,7 +17,7 @@ public class ImageFileValidator implements ConstraintValidator<ValidImage, Multi
     @Override
     public boolean isValid(MultipartFile multipartFile, ConstraintValidatorContext context) {
         Boolean result = true;
-        logger.info("validation-image-repository");
+        logger.debug("validation-image-repository");
         if(multipartFile != null) {
             String contentType = multipartFile.getContentType();
             if(!isSupportedContentType(contentType)) {
@@ -33,7 +33,7 @@ public class ImageFileValidator implements ConstraintValidator<ValidImage, Multi
                     addConstraintViolation();
             result = false;
         }
-        logger.info("file valid image");
+        logger.debug("file valid image");
         return result;
     }
 

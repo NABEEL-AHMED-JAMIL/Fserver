@@ -3,8 +3,6 @@ package com.ballistic.fserver.manager;
 import com.ballistic.fserver.exception.FileStorageException;
 import com.ballistic.fserver.exception.MyFileNotFoundException;
 import com.ballistic.fserver.properties.IFProperties;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;

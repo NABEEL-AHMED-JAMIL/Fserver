@@ -5,8 +5,6 @@ import com.ballistic.fserver.exception.FileStorageException;
 import com.ballistic.fserver.exception.IllegalBeanFieldException;
 import com.ballistic.fserver.exception.IllegalFileFormatException;
 import com.ballistic.fserver.exception.bean.ApiError;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -62,7 +59,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMissingServletRequestParameter(MissingServletRequestParameterException ex,
               HttpHeaders headers, HttpStatus status, WebRequest request) {
         String error = ex.getParameterName() + " parameter is missing";
-        logger.error("Missing-Servlet Request Parameter => " + error);
+        logger.error("{}" + error);
         return this.buildResponseEntity(new ApiError(status.INTERNAL_SERVER_ERROR, error, ex));
     }
 
@@ -81,7 +78,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         StringBuilder error = new StringBuilder();
         error.append(ex.getContentType());
         error.append(" media type is not supported. Supported media types are \"image/jpeg\", \"image/png\", \"image/jpg\"");
-        logger.error("Http MediaType " + error);
+        logger.error("{}" + error);
         return this.buildResponseEntity(new ApiError(status.UNSUPPORTED_MEDIA_TYPE, error.toString() , ex));
     }
 
@@ -97,12 +94,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
      * @param request WebRequest
      * @return the ApiError object
      */
-
     @Override
     protected ResponseEntity<Object> handleMissingServletRequestPart(MissingServletRequestPartException ex,
               HttpHeaders headers, HttpStatus status, WebRequest request) {
         String error = ex.getRequestPartName() + " part is missing";
-        logger.error("Missing-Servlet Request Part => " + error);
+        logger.error("{}" + error);
         return this.buildResponseEntity(new ApiError(status.BAD_REQUEST, error, ex));
      }
 
@@ -110,10 +106,10 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     /**
      * Handle MethodArgumentNotValidException. Triggered when an object fails @Valid validation.
      *
-//     * @param ex      the MethodArgumentNotValidException that is thrown when @Valid validation fails
-//     * @param headers HttpHeaders
-//     * @param status  HttpStatus
-//     * @param request WebRequesthandlerExceptionResolver
+     * @param ex      the MethodArgumentNotValidException that is thrown when @Valid validation fails
+     * @param headers HttpHeaders
+     * @param status  HttpStatus
+     * @param request WebRequesthandlerExceptionResolver
      * @return the ApiError object
      */
     @Override
@@ -121,11 +117,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
               HttpHeaders headers, HttpStatus status, WebRequest request) {
         ApiError apiError = new ApiError(status.BAD_REQUEST);
         apiError.setMessage("Validation error");
-        System.out.println(ex.getBindingResult().getFieldErrors().toString());
         apiError.addValidationErrors(ex.getBindingResult().getFieldErrors());
-        System.out.println(ex.getBindingResult().getGlobalErrors().toString());
         apiError.addValidationError(ex.getBindingResult().getGlobalErrors());
-        logger.error("Argument Not Valid :- " + apiError.toString());
+        logger.error("{}" + apiError);
         return buildResponseEntity(apiError);
     }
 
@@ -141,7 +135,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleEntityNotFound(EntityNotFoundException ex) {
         ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
         apiError.setMessage(ex.getMessage());
-        logger.error("Entity not found " + ex.getMessage());
+        logger.error("{}" + apiError);
         return buildResponseEntity(apiError);
     }
 
@@ -157,15 +151,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> illegalFileFormatException(IllegalFileFormatException ex) {
         ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
         apiError.setMessage("File format error");
-        List list = Arrays.asList(ex.getMessage());
-        System.out.println(list.toString());
         apiError.setDebugMessage(ex.getMessage());
-        logger.error("File format error " + ex.getMessage());
+        logger.error("{}" + apiError);
         return buildResponseEntity(apiError);
     }
 
     /**
-     * Handles IllegalArgumentException.
+     * Handles IllegalBeanFieldException.
      * Help to show error related to IllegalBean Field format error
      * use the costume parse method for parse the error..
      * to understand this method plz check the method call in AppRestController
@@ -177,37 +169,41 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> illegalBeanFieldException(IllegalBeanFieldException ex) throws IOException {
         ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
         apiError.setMessage("Validation error");
-        apiError.setDebugMessage(ex.getMessage());
         String error = ex.getMessage();
-//        if(error.charAt(0) == '{' && error.charAt(error.length()-1) == '}') {
-//            error = error.substring(1, error.length()-1); //remove curly brackets
-//            String[] keyValuePairs = error.split(","); //split the string to creat key-value pairs
-//            for(String pair : keyValuePairs) {     //iterate over the pairs
-//                String object = pair.split("=")[1];  //remove curly brackets
-//                if(object.charAt(0) == '{' && object.charAt(error.length()-1) == '}') {
-//                    error = object.substring(1, object.length()-1); //remove curly brackets
-//                    keyValuePairs = error.split(","); //split the string to creat key-value pairs
-//                    String objectName = null;
-//                    String field = null;
-//                    String reject = null;
-//                    String message = null;
-//                    for(String pair1 : keyValuePairs) {     //iterate over the pairs
-//                        String[] entry = pair1.split("=");      //split the pairs to get key and value
-//                        if(entry[0].trim().equals("objectName")) {
-//                            objectName = entry[1].trim();
-//                        } else if (entry[0].trim().equals("field")) {
-//                            field = entry[1].trim();
-//                        } else if (entry[0].trim().equals("reject")) {
-//                            reject = entry[1].trim();
-//                        } else if (entry[0].trim().equals("message")) {
-//                            message = entry[1].trim();
-//                        }
-//                    }
-//                    apiError.addValidationError(objectName, field, reject, message);
-//                }
-//            }
-//        }
-        logger.error("Argument Not Valid :- " + apiError.toString());
+        Integer i = 0;
+        while (true) {
+            String key = "key-"+i;
+            if(error.contains(key)) {
+                String value = StringUtils.substring(error, error.indexOf(key)); // key-i...to whole string
+                value = value.substring(key.length()+1, value.indexOf("}")+1); // key-i={value}
+                if(value.charAt(0) == '{' && value.charAt(value.length()-1) == '}') {
+                    value = value.substring(1, value.length() - 1); //remove curly brackets {value} => value
+                    String[] keyValuePairs = value.split(","); //split the string to creat key-value pairs
+                    String objectName = null;
+                    String field = null;
+                    String reject = null;
+                    String message = null;
+                    for(String pair : keyValuePairs) {     //iterate over the pairs
+                        String[] subPair = pair.split("=");      //split the pairs to get key and value
+                        if(subPair[0].trim().equals("objectName")) {
+                            objectName = subPair[1].trim();
+                        } else if (subPair[0].trim().equals("field")) {
+                            field = subPair[1].trim();
+                        } else if (subPair[0].trim().equals("reject")) {
+                            // reject may be reject=, so check need here also
+                            reject = subPair.length > 1 ? subPair[1].trim(): "";
+                        } else if (subPair[0].trim().equals("message")) {
+                            message = subPair[1].trim();
+                        }
+                    }
+                    apiError.addValidationError(objectName, field, reject, message);
+                }
+            }else {
+                break;
+            }
+            i++;
+        }
+        logger.error("{}" + apiError);
         return buildResponseEntity(apiError);
     }
 
@@ -239,7 +235,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         ApiError apiError = new ApiError(status);
         apiError.setMessage(error);
         if(StringUtils.isNotEmpty(ex.getLocalizedMessage())) { apiError.setDebugMessage(ex.getLocalizedMessage()); }
-        logger.error("Exception due to => " + error);
+        logger.error("{}" + apiError);
         return buildResponseEntity(apiError);
     }
 
@@ -267,7 +263,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
      * Handle HttpMessageNotWritableException.
      *
      * @param ex      HttpMessageNotWritableException
-     * @param headers HttpHeaders
+     * @l8param headers HttpHeaders
      * @param status  HttpStatus
      * @param request WebRequest
      * @return the ApiError object
@@ -307,8 +303,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
      * @return the ApiError object
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
-    protected ResponseEntity<Object> handleDataIntegrityViolation(DataIntegrityViolationException ex,
-                                                                  WebRequest request) {
+    protected ResponseEntity<Object> handleDataIntegrityViolation(DataIntegrityViolationException ex, WebRequest request) {
         if (ex.getCause() instanceof ConstraintViolationException) {
             return buildResponseEntity(new ApiError(HttpStatus.CONFLICT, "Database error", ex.getCause()));
         }
@@ -339,4 +334,53 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
         return new ResponseEntity<>(apiError, apiError.getStatus());
     }
+
+    /**
+    public static void main(String args[]) {
+
+        String error = "{key-1={field=password, reject=, objectName=accountBean, message=Password contain blank}" +
+                "key-0={field=email, reject=, objectName=accountBean, message=Email Contain blank}," +
+                "key-3={field=file, reject=null, objectName=accountBean, message=File object null pls enter PNG or JPG image.}," +
+                "key-2={field=file, reject=null, objectName=accountBean, message=File contain null}" +
+                "}";
+
+        Integer i = 0;
+        while (true) {
+            String key = "key-"+i;
+            if(error.contains(key)) {
+                String value = StringUtils.substring(error, error.indexOf(key)); // key-i...to whole string
+                value = value.substring(key.length()+1, value.indexOf("}")+1); // key-i={value}
+                if(value.charAt(0) == '{' && value.charAt(value.length()-1) == '}') {
+                    value = value.substring(1, value.length() - 1); //remove curly brackets {value} => value
+                    System.out.println(value);
+                    String[] keyValuePairs = value.split(","); //split the string to creat key-value pairs
+                    String objectName = null;
+                    String field = null;
+                    String reject = null;
+                    String message = null;
+                    for(String pair : keyValuePairs) {     //iterate over the pairs
+                        String[] subPair = pair.split("=");      //split the pairs to get key and value
+                        if(subPair[0].trim().equals("objectName")) {
+                            objectName = subPair[1].trim();
+                            System.out.println(objectName);
+                        } else if (subPair[0].trim().equals("field")) {
+                            field = subPair[1].trim();
+                            System.out.println(field);
+                        } else if (subPair[0].trim().equals("reject")) {
+                            // reject may be reject=, so check need here also
+                            reject = subPair.length > 1 ? subPair[1].trim(): "";
+                            System.out.println(reject);
+                        } else if (subPair[0].trim().equals("message")) {
+                            message = subPair[1].trim();
+                            System.out.println(message);
+                        }
+                    }
+                   // apiError.addValidationError(objectName, field, reject, message);
+                }
+            }else {
+                break;
+            }
+            i++;
+        }
+    } */
 }

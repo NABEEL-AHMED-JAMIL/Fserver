@@ -27,7 +27,7 @@ public class AccountService implements IAccountService {
     private IAccountRepository iAccountRepository;
 
     public Account saveAccount(Account account) {
-        logger.info("Save- {} to Db ", account);
+        logger.debug("Save- {} to Db ", account);
         return this.iAccountRepository.save(account);
     }
 
@@ -35,42 +35,42 @@ public class AccountService implements IAccountService {
     // both save && delete
     @Override
     public List<Account> findAllAccountByStatus(String status) {
-        logger.info("fetch Account by {} from Db ", status);
+        logger.debug("fetch Account by {} from Db ", status);
         return this.iAccountRepository.findByStatus(status);
     }
 
     // handle error
     public Optional<Account> fetchAccount(String id) {
-        logger.info("fetch {} from Db " , id);
+        logger.debug("fetch {} from Db " , id);
         return this.iAccountRepository.findById(id);
     }
 
     // handle error
     public List<Account> fetchAllAccount(){
-        logger.info("fetch all account from Db ");
+        logger.debug("fetch all account from Db ");
         return this.iAccountRepository.findAll();
     }
 
     // handle error
     public Account deleteAccount(String id) {
-        logger.info("Delete- {} from Db ", id);
+        logger.debug("Delete- {} from Db ", id);
         Account account = this.fetchAccount(id).orElseThrow(null);
         // update the status of the file
         account.setStatus("delete");
         logger.warn("account-delete process..");
         account = this.saveAccount(account);
-        logger.info("account-delete done");
+        logger.debug("account-delete done");
 
         return account;
     }
 
+    // use @Query
     // handle error
     public List<Account> deleteAccounts(List<String> ids) {
         List<Account> accounts = null;
 
         Query query = new Query();
-        query.addCriteria(Criteria.where("id").in(ids).
-                andOperator(Criteria.where("status").ne("save")));
+        query.addCriteria(Criteria.where("id").in(ids).andOperator(Criteria.where("status").ne("save")));
         logger.info("Json Query :- "+ query.toString());
 
         Update update = new Update();

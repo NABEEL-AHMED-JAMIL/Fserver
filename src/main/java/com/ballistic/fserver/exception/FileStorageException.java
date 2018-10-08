@@ -1,6 +1,5 @@
 package com.ballistic.fserver.exception;
 
-
 public class FileStorageException extends RuntimeException {
 
     public FileStorageException() { }

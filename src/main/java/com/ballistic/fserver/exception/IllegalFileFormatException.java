@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 
-
 public class IllegalFileFormatException extends RuntimeException {
 
     public IllegalFileFormatException(String error, String... fileFormats) {

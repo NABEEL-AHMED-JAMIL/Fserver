@@ -114,7 +114,8 @@ public class AppRestController {
 
         if(!wrongTypeFile.isEmpty()) {
             logger.error("wrong files :- " + wrongTypeFile.toString());
-            throw new IllegalFileFormatException("Wrong file type upload " + wrongTypeFile.toString() + " while required => ", "image/jpeg", "image/png", "image/jpg");
+            throw new IllegalFileFormatException("Wrong file type upload " + wrongTypeFile.toString() +
+                    " while required => ", "image/jpeg", "image/png", "image/jpg");
         }
 
         this.apiResponses = new ArrayList<>();
@@ -128,7 +129,7 @@ public class AppRestController {
         return new ResponseEntity<>(this.apiResponses, HttpStatus.OK);
     }
 
-    // done test 00.99%
+    // done test 99.99%
     @ApiOperation(value = "File upload with object field", response = APIResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = String.class),
@@ -137,13 +138,8 @@ public class AppRestController {
     public ResponseEntity<APIResponse<?>> saveAccountWithSingleFile(
             @ApiParam(name = "account", value = "Select File with Dto field", required = true)
             @Valid AccountBean accountBean, BindingResult bindingResult) throws IllegalBeanFieldException {
-
         long sTime = System.nanoTime();
-        logger.info("file save with account process");
-        /**
-         * Note :- handle the error in "RestExceptionHandler"
-         * parsing the list of fieldError
-         * */
+        logger.info("save file with account process");
         if(bindingResult.hasErrors()) {
             AtomicInteger bind = new AtomicInteger();
             HashMap<String, HashMap<String, Object>> error = new HashMap<>();
@@ -151,10 +147,8 @@ public class AppRestController {
                 String key = "key-"+bind;
                 HashMap<String, Object> value = new HashMap<>();
                 value.put("objectName", fieldError.getObjectName());
-                value.put("field", fieldError.getField());
-                value.put("reject", fieldError.getField().equals("file") ?
-                        this.modelMapper.map(fieldError.getRejectedValue(), MultipartFile.class).getOriginalFilename() :
-                        fieldError.getRejectedValue());
+                value.put("field", fieldError.getField() != null ? fieldError.getField() : "null");
+                value.put("reject", fieldError.getRejectedValue() != null ? fieldError.getRejectedValue() : "null");
                 value.put("message", fieldError.getDefaultMessage());
                 error.put(key, value);
                 bind.getAndIncrement();
@@ -162,6 +156,7 @@ public class AppRestController {
             throw new IllegalBeanFieldException(error.toString());
         }
         this.apiResponse = this.uploadFile(accountBean.getFile()).getBody();
+        logger.debug("account file save time " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
 
         if(this.apiResponse.getReturnCode().equals(HttpStatus.OK)) {
             // add-info to the account
@@ -170,6 +165,7 @@ public class AppRestController {
             account.setPassword(accountBean.getPassword());
 			account.setFileInfo((FileInfo) this.apiResponse.getEntity());
             account = this.iAccountService.saveAccount(account);
+            logger.info("account with file single file info save time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
             this.apiResponse = new APIResponse<Account>("File save with account", HttpStatus.OK, account);
             logger.info("account added " + this.apiResponse.toString());
             logger.info("total response time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
@@ -185,11 +181,10 @@ public class AppRestController {
             @ApiResponse(code = 200, message = "Success", response = String.class),
             @ApiResponse(code = 404, message = "Not Found")})
     @RequestMapping(value = "/save/accounts/local", method = RequestMethod.POST)
-    public ResponseEntity<List<APIResponse<?>>> saveAccountWithMultipleFile(
+    public ResponseEntity<List<APIResponse<?>>> saveAccountsWithFile(
             @ApiParam(name = "account", value = "Select Files with Dto field", required = true)
             List<AccountBean> accountBeans) {
 
-        //wrongTypeFile
         List<AccountBean> accountWithWrongFile = accountBeans.stream().filter(accountBean -> {
             return !isSupportedContentType(accountBean.getFile().getContentType());
         }).collect(Collectors.toList());
@@ -216,7 +211,9 @@ public class AppRestController {
             @ApiResponse(code = 200, message = "Success", response = Account.class),
             @ApiResponse(code = 404, message = "Not Found")})
     @RequestMapping(value = "/fetch/accounts/local/status={status}", method = RequestMethod.GET)
-    public List<Account> findAllAccountByStatus(@PathVariable(name = "status", required = true) String status) {
+    public List<Account> fetchAllAccountByStatus(@PathVariable(name = "status", required = true, value = "save") String status) {
+
+
         return null;
     }
 
@@ -225,7 +222,7 @@ public class AppRestController {
     @ApiOperation(value = "Find Account by id", response = String.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = Account.class),
-            @ApiResponse(code = 404, message = "Not Found")})
+           @ApiResponse(code = 404, message = "Not Found")})
     @RequestMapping(value = "/fetch/accounts/accountId={id}", method = RequestMethod.GET)
     public Optional<Account> fetchAccount(@PathVariable(name = "id", required = true) String id) { return null; }
 

@@ -10,7 +10,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 // done test 100%
-
 @JsonPropertyOrder({ "email", "password", "file" })
 public class AccountBean {
 
