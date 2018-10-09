@@ -10,6 +10,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -59,7 +60,7 @@ public class FileStoreManager {
         // done test 99.99%
         public ManagerResponse<FileInfoStore> storeFile(MultipartFile file) throws FileStorageException {
             logger.info("file :- FileInfo{"+  "{}" + "}" , file.getOriginalFilename() + "," + file.getSize() + "," + file.getContentType());
-            String fileName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename()); // file name
+            String fileName = StringUtils.cleanPath(file.getOriginalFilename()); // file name
             try {
                 if(fileName.contains("..")){
                     logger.error("filename contains invalid path :- " + fileName + ".");

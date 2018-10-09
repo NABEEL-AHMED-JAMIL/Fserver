@@ -9,13 +9,13 @@ public interface IAccountService {
 
     public Account saveAccount(Account account);
 
-    public List<Account> findAllAccountByStatus(String status);
+    public List<Account> fetchAllAccountByStatus(String status);
 
-    public Optional<Account> fetchAccount(String id);
+    public Optional<Account> fetchAccountById(String id);
     // both save && delete
     public List<Account> fetchAllAccount();
 
-    public Account deleteAccount(String id);
+    public Account deleteAccount(Account account);
 
     public List<Account> deleteAccounts(List<String> ids);
 }

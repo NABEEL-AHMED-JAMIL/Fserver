@@ -23,10 +23,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import static com.ballistic.fserver.validation.ImageFileValidator.isSupportedContentType;
+import static com.ballistic.fserver.validation.StatusValidator.isSupportedStatusType;
 
 /**
  * Note:- handle home-page api
@@ -46,7 +48,7 @@ public class AppRestController {
     @Autowired
     private FileStoreManager fileStoreManager;
     @Autowired
-    private FileStoreService fileStoreService;
+    private FileStoreService ifileStoreService;
     @Autowired
     private IAccountService iAccountService;
 
@@ -61,7 +63,13 @@ public class AppRestController {
         return "pong";
     }
 
-    // done test 99.99%
+    /**
+     * Done test 99.99%
+     * Note:- Possible Test case for this api are follow
+     * 1) Test api with valid input(png,jpg) type image => pass will response 200 with object
+     * 2) Test api with blank @RequestParam will throw error => fail will response 400 with error object
+     * 3) Test api with non valid input(not image) will => fail response 400 with error object
+     * */
     @ApiOperation(value = "File upload with single", response = APIResponse.class)
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "The POST call is Successful"),
@@ -72,18 +80,22 @@ public class AppRestController {
     public ResponseEntity<APIResponse> uploadFile(@RequestParam(name = "file", required = true) MultipartFile file)
             throws IllegalFileFormatException, FileStorageException {
         long sTime = System.nanoTime();
-        logger.info("upload-single file");
+        logger.debug("upload-single file");
         if(isFileValidType(file.getContentType())) {
-            logger.info("file content accept " + file.getContentType());
-            // call method
+            logger.debug("file content accept " + file.getContentType());
             this.apiResponse = fileProcess(file, sTime);
         }
         logger.info("total response time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
         return new ResponseEntity<APIResponse>(this.apiResponse, HttpStatus.OK);
     }
 
-
-    // done test 99.99%
+    /**
+     * Done test 99.99%
+     * Note:- Possible Test case for this api are follow
+     * 1) Test api with valid input(png,jpg) type image => pass will response 200 with object
+     * 2) Test api with blank @RequestParam will throw error => fail will response 400 with error object
+     * 3) Test api with non valid input(not image) will => fail response 400 with error object
+     * */
     @ApiOperation(value = "Multiple Files upload")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The POST call is Successful"),
@@ -103,19 +115,17 @@ public class AppRestController {
             throw new FileStorageException(String.valueOf(error));
         }
         // Note :- 'here this upload file dto help to collect the non-support file info'
-        List<String> wrongTypeFile = files.stream().
-            filter(file -> {
-                logger.debug("file type checking process..");
-                return !isSupportedContentType(file.getContentType());
-            }).map(file -> {
+        List<String> wrongTypeFile = files.parallelStream().filter(file -> {
+            logger.debug("file type checking process..");
+            return !isSupportedContentType(file.getContentType());
+        }).map(file -> {
             logger.debug("wrong file found :- {}", file.getOriginalFilename());
             return file.getOriginalFilename() + " => " + file.getContentType();
         }).collect(Collectors.toList());
 
         if(!wrongTypeFile.isEmpty()) {
             logger.error("wrong files :- " + wrongTypeFile.toString());
-            throw new IllegalFileFormatException("Wrong file type upload " + wrongTypeFile.toString() +
-                    " while required => ", "image/jpeg", "image/png", "image/jpg");
+            throw new IllegalFileFormatException("Wrong file type upload " + wrongTypeFile.toString() + " while required => ", "image/jpeg", "image/png", "image/jpg");
         }
 
         this.apiResponses = new ArrayList<>();
@@ -183,11 +193,12 @@ public class AppRestController {
     @RequestMapping(value = "/save/accounts/local", method = RequestMethod.POST)
     public ResponseEntity<List<APIResponse<?>>> saveAccountsWithFile(
             @ApiParam(name = "account", value = "Select Files with Dto field", required = true)
-            List<AccountBean> accountBeans) {
+            @Valid List<AccountBean> accountBeans) {
 
-        List<AccountBean> accountWithWrongFile = accountBeans.stream().filter(accountBean -> {
-            return !isSupportedContentType(accountBean.getFile().getContentType());
-        }).collect(Collectors.toList());
+        List<AccountBean> accountWithWrongFile = accountBeans.parallelStream().
+            filter(accountBean -> {
+               return !isSupportedContentType(accountBean.getFile().getContentType());
+            }).collect(Collectors.toList());
 
         if(!accountWithWrongFile.isEmpty()) {
             logger.error("wrong Account's" + accountWithWrongFile.toString());
@@ -205,51 +216,96 @@ public class AppRestController {
         return new ResponseEntity<List<APIResponse<?>>>(this.apiResponses, HttpStatus.OK);
     }
 
-    // done test 00.99%
-    @ApiOperation(value = "Find Accounts by status", response = String.class)
+    // done test 99.99%
+    @ApiOperation(value = "Find Accounts by status", response = APIResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = Account.class),
             @ApiResponse(code = 404, message = "Not Found")})
     @RequestMapping(value = "/fetch/accounts/local/status={status}", method = RequestMethod.GET)
-    public List<Account> fetchAllAccountByStatus(@PathVariable(name = "status", required = true, value = "save") String status) {
-
-
-        return null;
+    public ResponseEntity<?> fetchAllAccountByStatus(@NotBlank @NotBlank @PathVariable(name = "status") String status) {
+        long sTime = System.nanoTime();
+        if(isStatusValidType(status)) {
+            logger.debug("status accept " + status);
+            this.apiResponse = new APIResponse<>("Fetch Record", HttpStatus.OK, this.iAccountService.fetchAllAccountByStatus(status));
+            logger.debug("fetch response time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
+        }
+        logger.debug("account fetch " + this.apiResponse.toString());
+        logger.info("total response time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
+        return new ResponseEntity<APIResponse>(this.apiResponse, HttpStatus.OK);
     }
 
-    // done test 00.99%
-    // handle error
-    @ApiOperation(value = "Find Account by id", response = String.class)
+    // done test 99.99%
+    @ApiOperation(value = "Find Account by id", response = APIResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = Account.class),
            @ApiResponse(code = 404, message = "Not Found")})
     @RequestMapping(value = "/fetch/accounts/accountId={id}", method = RequestMethod.GET)
-    public Optional<Account> fetchAccount(@PathVariable(name = "id", required = true) String id) { return null; }
+    public ResponseEntity<?> fetchAccountById(@NotBlank @NotBlank @PathVariable(name = "id", required = true) String id) {
+        long sTime = System.nanoTime();
+        this.apiResponse = new APIResponse<>("Fetch by Account ID", HttpStatus.OK, this.iAccountService.fetchAccountById(id));
+        logger.debug("account fetch " + this.apiResponse.toString());
+        logger.info("total response time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
+        return new ResponseEntity<APIResponse>(this.apiResponse, HttpStatus.OK);
+    }
 
-    // handle error
+    // done test 99.99%
     /**
      * Note:- use pagination
      */
-    @ApiOperation(value = "Find Accounts", response = String.class)
+    @ApiOperation(value = "Find Accounts", response = APIResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = Account.class),
             @ApiResponse(code = 404, message = "Not Found")})
     @RequestMapping(value = "/fetch/accounts/local", method = RequestMethod.GET)
-    public List<Account> fetchAllAccounts() {
-        return null;
+    public ResponseEntity<?> fetchAllAccounts() {
+        long sTime = System.nanoTime();
+        this.apiResponse = new APIResponse<>("Fetch All Account's", HttpStatus.OK, this.iAccountService.fetchAllAccount());
+        logger.debug("account fetch " + this.apiResponse.toString());
+        logger.info("total response time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
+        return new ResponseEntity<APIResponse>(this.apiResponse, HttpStatus.OK);
     }
 
-    // handle error
-    @ApiOperation(value = "Delete Account", response = String.class)
+    // done test 99.99%
+    @ApiOperation(value = "Delete Account", response = APIResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = Account.class),
             @ApiResponse(code = 404, message = "Not Found")})
     @RequestMapping(value = "/delete/account/local/accountId={id}", method = RequestMethod.DELETE)
-    public Account deleteAccount(@PathVariable(name = "id", required = true) String id) {
-        return null;
+    public ResponseEntity<?> deleteAccount(@PathVariable(name = "id", required = true) String id) throws NullPointerException {
+        long sTime = System.nanoTime();
+        this.apiResponse = (APIResponse<?>) this.fetchAccountById(id).getBody();
+        if(ObjectUtils.anyNotNull(this.apiResponse) && this.apiResponse.getReturnCode().equals(HttpStatus.OK)) {
+            Account account = (Account) this.apiResponse.getEntity();
+            // here bz some of status are null early data be
+            if(ObjectUtils.anyNotNull(account) && (account.getStatus().equalsIgnoreCase("Save") || account.getStatus() == null)) {
+                // change the status...
+                if(ObjectUtils.anyNotNull(account.getFileInfo())) {
+                    /**
+                     * Note:- We change the status in db so we are not delete the file from our Bucket
+                     * set the account file info as new update file info
+                     * */
+                    account.setFileInfo(this.ifileStoreService.getLocalFileStoreService().deleteFile(account.getFileInfo()));
+                }
+                // now send this info into the service for change the status of
+                account = this.iAccountService.deleteAccount(account);
+                this.apiResponse = new APIResponse<>("Fetch All Account's", HttpStatus.OK, account);
+                logger.debug("account delte " + this.apiResponse.toString());
+
+            } else {
+                // if the status of Account not "Save" && "null" then here
+                throw new NullPointerException("Account Not Found In Db");
+            }
+
+        } else {
+            // mean db already have status="Delete"
+            throw new NullPointerException("Account Not Found In Db");
+        }
+        logger.info("total response time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
+        return new ResponseEntity<APIResponse>(this.apiResponse, HttpStatus.OK);
+
     }
 
-    // handle error
+    // done test 00.99%
     @ApiOperation(value = "Find Accounts", response = String.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = Account.class),
@@ -267,7 +323,7 @@ public class AppRestController {
             //FileInfo fileInfo = (FileInfo) this.managerResponse.getEntity();
             FileInfo fileInfo = this.modelMapper.map(this.managerResponse.getEntity(), FileInfo.class);
             logger.info("file upload time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
-            fileInfo = this.fileStoreService.getLocalFileStoreService().storeFile(fileInfo);
+            fileInfo = this.ifileStoreService.getLocalFileStoreService().storeFile(fileInfo);
             logger.info("file data-store time :- " + ((System.nanoTime() - sTime) / 1000000) + ".ms");
             this.apiResponse = new APIResponse<FileInfo>("File Store successfully ", HttpStatus.OK, fileInfo);
             logger.info("response :-" + this.apiResponse.getEntity().toString() + " file store successfully");
@@ -282,6 +338,16 @@ public class AppRestController {
             // sorry repository store support only the image's
             logger.info("file content reject " + contentType);
             throw new IllegalFileFormatException("Wrong file type upload " + contentType + " while required => ", "image/jpeg", "image/png", "image/jpg");
+        }
+        return true;
+    }
+
+    // done-test 99.99%
+    private Boolean isStatusValidType(String statusType) throws IllegalBeanFieldException {
+        if(!isSupportedStatusType(statusType)) {
+            // sorry repository store support only the image's
+            logger.info("Status reject " + statusType);
+            throw new IllegalFileFormatException("Only \"Save\" or \"Delete\" Status Use");
         }
         return true;
     }

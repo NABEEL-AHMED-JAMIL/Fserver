@@ -44,15 +44,12 @@ public class FileStoreService {
         }
 
         @Override
-        public FileInfo deleteFile(String fileName) {
-            logger.debug("Delete- File {} from Db ", fileName);
-            FileInfo fileInfo = this.loadFileAsResource(fileName).
-                    orElseThrow(null);
-
+        public FileInfo deleteFile(FileInfo fileInfo) {
+            logger.debug("Delete- File {} from Db ", fileInfo.getFileName());
             // update the status of the file
-            fileInfo.setStatus("delete");
-            logger.warn("file-delete process..");
-            fileInfo = this.storeFile(fileInfo);
+            logger.debug("file-delete process..");
+            fileInfo.setStatus("Delete");
+            this.storeFile(fileInfo);
             logger.info("file-delete done");
             return fileInfo;
         }

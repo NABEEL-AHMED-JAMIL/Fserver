@@ -59,7 +59,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMissingServletRequestParameter(MissingServletRequestParameterException ex,
               HttpHeaders headers, HttpStatus status, WebRequest request) {
         String error = ex.getParameterName() + " parameter is missing";
-        logger.error("{}" + error);
+        logger.error("{}", error);
         return this.buildResponseEntity(new ApiError(status.INTERNAL_SERVER_ERROR, error, ex));
     }
 
@@ -78,7 +78,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         StringBuilder error = new StringBuilder();
         error.append(ex.getContentType());
         error.append(" media type is not supported. Supported media types are \"image/jpeg\", \"image/png\", \"image/jpg\"");
-        logger.error("{}" + error);
+        logger.error("{}", error);
         return this.buildResponseEntity(new ApiError(status.UNSUPPORTED_MEDIA_TYPE, error.toString() , ex));
     }
 
@@ -98,7 +98,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMissingServletRequestPart(MissingServletRequestPartException ex,
               HttpHeaders headers, HttpStatus status, WebRequest request) {
         String error = ex.getRequestPartName() + " part is missing";
-        logger.error("{}" + error);
+        logger.error("{}", error);
         return this.buildResponseEntity(new ApiError(status.BAD_REQUEST, error, ex));
      }
 
@@ -119,7 +119,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         apiError.setMessage("Validation error");
         apiError.addValidationErrors(ex.getBindingResult().getFieldErrors());
         apiError.addValidationError(ex.getBindingResult().getGlobalErrors());
-        logger.error("{}" + apiError);
+        logger.error("{}", apiError);
         return buildResponseEntity(apiError);
     }
 
@@ -135,9 +135,25 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleEntityNotFound(EntityNotFoundException ex) {
         ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
         apiError.setMessage(ex.getMessage());
+        logger.error("{}", apiError);
+        return buildResponseEntity(apiError);
+    }
+
+
+    /**
+     * Handles NullPointerException.
+     * Created to encapsulate errors with more detail than NullPointerException.
+     * @param ex the NullPointerException
+     * @return the ApiError object
+     */
+    @ExceptionHandler(NullPointerException.class)
+    protected ResponseEntity<Object> handleEntityNotFound(NullPointerException ex) {
+        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
+        apiError.setMessage(ex.getMessage());
         logger.error("{}" + apiError);
         return buildResponseEntity(apiError);
     }
+
 
 
     /**
@@ -150,9 +166,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(IllegalFileFormatException.class)
     protected ResponseEntity<Object> illegalFileFormatException(IllegalFileFormatException ex) {
         ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
-        apiError.setMessage("File format error");
+        apiError.setMessage("Format error");
         apiError.setDebugMessage(ex.getMessage());
-        logger.error("{}" + apiError);
+        logger.error("{}", apiError);
         return buildResponseEntity(apiError);
     }
 
@@ -203,7 +219,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
             }
             i++;
         }
-        logger.error("{}" + apiError);
+        logger.error("{}", apiError);
         return buildResponseEntity(apiError);
     }
 
@@ -235,7 +251,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         ApiError apiError = new ApiError(status);
         apiError.setMessage(error);
         if(StringUtils.isNotEmpty(ex.getLocalizedMessage())) { apiError.setDebugMessage(ex.getLocalizedMessage()); }
-        logger.error("{}" + apiError);
+        logger.error("{}", apiError);
         return buildResponseEntity(apiError);
     }
 
@@ -291,7 +307,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         ApiError apiError = new ApiError(status.BAD_REQUEST);
         apiError.setMessage(String.format("Could not find the %s method for URL %s", ex.getHttpMethod(), ex.getRequestURL()));
         apiError.setDebugMessage(ex.getMessage());
-        logger.error("{}" + apiError);
+        logger.error("{}", apiError);
         return buildResponseEntity(apiError);
     }
 

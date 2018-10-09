@@ -26,13 +26,14 @@
 
     </Appenders>
 
+
     <Loggers>
-        <AsyncLogger name="com.example.log4j2demo" level="log" additivity="false">
+        <AsyncLogger name="com.example.log4j2demo" level="DEBUG" additivity="false">
             <AppenderRef ref="ConsoleAppender" />
             <AppenderRef ref="FileAppender" />
         </AsyncLogger>
 
-        <Root level="info">
+        <Root level="DEBUG">
             <AppenderRef ref="ConsoleAppender" />
             <AppenderRef ref="FileAppender" />
         </Root>

@@ -27,48 +27,47 @@ public class AccountService implements IAccountService {
     private IAccountRepository iAccountRepository;
 
     public Account saveAccount(Account account) {
-        logger.debug("Save- {} to Db ", account);
+        logger.debug("Save - {} to Db ", account);
         return this.iAccountRepository.save(account);
     }
 
     // handle error
-    // both save && delete
+    // both save && deletek8
     @Override
-    public List<Account> findAllAccountByStatus(String status) {
-        logger.debug("fetch Account by {} from Db ", status);
+    public List<Account> fetchAllAccountByStatus(String status) {
+        logger.debug("Fetch - Account by {} from Db ", status);
         return this.iAccountRepository.findByStatus(status);
     }
 
     // handle error
-    public Optional<Account> fetchAccount(String id) {
-        logger.debug("fetch {} from Db " , id);
+    public Optional<Account> fetchAccountById(String id) {
+        logger.debug("Fetch - {} from Db " , id);
         return this.iAccountRepository.findById(id);
     }
 
     // handle error
     public List<Account> fetchAllAccount(){
-        logger.debug("fetch all account from Db ");
+        logger.debug("Fetch - all account from Db ");
         return this.iAccountRepository.findAll();
     }
 
     // handle error
-    public Account deleteAccount(String id) {
-        logger.debug("Delete- {} from Db ", id);
-        Account account = this.fetchAccount(id).orElseThrow(null);
+    public Account deleteAccount(Account account) throws NullPointerException {
+        logger.debug("Delete - AccountId {} from Db ", account.getId());
         // update the status of the file
-        account.setStatus("delete");
+        logger.debug("file-delete process..");
+        account.setStatus("Delete");
         logger.warn("account-delete process..");
         account = this.saveAccount(account);
         logger.debug("account-delete done");
-
         return account;
     }
 
     // use @Query
     // handle error
     public List<Account> deleteAccounts(List<String> ids) {
-        List<Account> accounts = null;
 
+        List<Account> accounts = null;
         Query query = new Query();
         query.addCriteria(Criteria.where("id").in(ids).andOperator(Criteria.where("status").ne("save")));
         logger.info("Json Query :- "+ query.toString());

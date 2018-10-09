@@ -9,7 +9,7 @@ public interface IFileStoreService {
     public interface ILocalFileStoreService {
         public FileInfo storeFile(FileInfo fileInfo);
         public Optional<FileInfo> loadFileAsResource(String id);
-        public FileInfo deleteFile(String fileName);
+        public FileInfo deleteFile(FileInfo fileInfo);
     }
     public interface IServerFileStoreService {
         public void storeFile();
