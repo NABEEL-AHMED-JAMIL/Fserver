@@ -32,7 +32,7 @@ public class AccountService implements IAccountService {
     }
 
     // handle error
-    // both save && deletek8
+    // both save && delete
     @Override
     public List<Account> fetchAllAccountByStatus(String status) {
         logger.debug("Fetch - Account by {} from Db ", status);
@@ -57,7 +57,7 @@ public class AccountService implements IAccountService {
         // update the status of the file
         logger.debug("file-delete process..");
         account.setStatus("Delete");
-        logger.warn("account-delete process..");
+        logger.warn("file-delete process..");
         account = this.saveAccount(account);
         logger.debug("account-delete done");
         return account;

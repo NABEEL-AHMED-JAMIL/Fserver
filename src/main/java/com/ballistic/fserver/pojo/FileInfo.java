@@ -16,7 +16,7 @@ public class FileInfo {
     private String width;
     private String height;
     private String contentType; // jpg,png
-    private String status = "save";
+    private String status = "Save";
 
     public FileInfo() { }
 

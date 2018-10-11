@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.CUSTOM, property = "error", visible = true)
 @JsonTypeIdResolver(LowerCaseClassNameResolver.class)
@@ -75,9 +74,7 @@ public class ApiError {
 
     // error adding point
     private void addSubError(ApiSubError subError) {
-        if(this.getSubErrors() == null) {
-            this.setSubErrors(new ArrayList<>());
-        }
+        if(this.getSubErrors() == null) { this.setSubErrors(new ArrayList<>()); }
         this.getSubErrors().add(subError);
     }
 
@@ -90,8 +87,7 @@ public class ApiError {
     }
     // # 2
     public void addValidationError(FieldError fieldError) {
-        this.addValidationError(fieldError.getObjectName(), fieldError.getField(), fieldError.getRejectedValue(),
-                fieldError.getDefaultMessage());
+        this.addValidationError(fieldError.getObjectName(), fieldError.getField(), fieldError.getRejectedValue(), fieldError.getDefaultMessage());
     }
     // # 1
     public void addValidationErrors(List<FieldError> fieldErrors) {

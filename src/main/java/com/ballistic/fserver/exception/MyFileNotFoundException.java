@@ -2,8 +2,7 @@ package com.ballistic.fserver.exception;
 
 public class MyFileNotFoundException extends RuntimeException {
 
-    public MyFileNotFoundException() {
-    }
+    public MyFileNotFoundException() { }
 
     public MyFileNotFoundException(String message) {
         super(message);

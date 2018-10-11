@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -51,7 +50,12 @@ public class FileStoreManager {
         // done test 99.99%
         @Autowired
         public LocalFileStoreManager(IFProperties.LocalStoreProperties localStoreProperties) throws FileStorageException {
+            /**
+             * Note:- localPathInit boolean volatile will look-up condition
+             * until the value change of that variable
+             * */
             if(!this.localPathInit) {
+                logger.info("LocalFileStoreManager-->LocalStoreProperties-->Init-Value");
                 this.localFileStorePath = createPath(localStoreProperties.getUploadDir());
                 this.localPathInit = true;
             }
@@ -92,12 +96,18 @@ public class FileStoreManager {
             }
         }
 
-        // handle error
+        /**
+         * Handles LoadFileAsResource.
+         * help method to load the file-resource
+         *
+         * @param fileName the String
+         * @return the Resource object
+         */
         public Resource loadFileAsResource(String fileName) {
             try {
                 Path filePath = this.localFileStorePath.resolve(fileName).normalize();
                 Resource resource = new UrlResource(filePath.toUri()); // will get the resouce
-                if(resource.exists()) {
+                if(resource.exists() || resource.isReadable()) {
                     logger.info("Resource found..." + resource.getFilename());
                     return resource;
                 } else {
@@ -111,27 +121,32 @@ public class FileStoreManager {
         }
 
         // handle error
-        public Boolean deleteFile(String fileName) {
+        public Boolean deleteFile(String fileName) throws IOException {
             Path path = this.localFileStorePath.resolve(fileName).normalize();
             // check the file contain or not
             if(Files.exists(path)) {
-                // delete-ing file
                 try {
                     logger.warn("File delete process");
                     Files.delete(path);
                     logger.info("file {} delete", path.getFileName());
                     return true;
-                } catch (IOException e) {
-                    throw null;
+                } catch (IOException ex) {
+                    throw new IOException(ex.getMessage());
                 }
             }
-            throw null;
+            throw new MyFileNotFoundException("File not found " + fileName);
         }
 
+        /**
+         * Note:- Path ==> Create-Path
+         * Create the local-path on init the project
+         * if the user delete the folder of path it will create the on the request but file
+         * not save on next request will able to save again file
+         * */
         private static Path createPath(String uploadDir) {
             try {
                 // check is path null then init
-                if(localFileStorePath == null) {
+                if(StringUtils.isEmpty(localFileStorePath)) {
                     localFileStorePath = Paths.get(uploadDir).toAbsolutePath().normalize();
                 }
                 logger.info("file path init. => " + uploadDir);
@@ -152,6 +167,51 @@ public class FileStoreManager {
     @Component
     public static class ServerFileStoreManager {
 
+        private static volatile Boolean serverPathInit = false;
+        private String defaultBucket;
+        private String accessKeyId;
+        private String accessKeySecret;
+
+        /**
+         * Create a new instance of the {@link ServerFileStoreManager} with the bucket name and access credentials
+         **/
+        @Autowired
+        public ServerFileStoreManager(IFProperties.AmazonProperties awsProp) {
+            /**
+             * Note:- serverPathInit boolean volatile will look-up condition
+             * until the value change of that variable
+             * */
+            if(!this.serverPathInit) {
+                logger.info("ServerFileStoreManager-->AmazonProperties-->Init-Value");
+                this.defaultBucket = awsProp.getS3().getDefaultBucket();
+                this.accessKeyId = awsProp.getAws().getAccessKeyId();
+                this.accessKeySecret = awsProp.getAws().getAccessKeySecret();
+                this.serverPathInit = true;
+            }
+        }
+
+        private void getCredentials() {
+
+        }
+
+
+        // Creating, Listing, and Deleting |S3| Buckets
+        public void createBucket() {}
+        public void listingBucket() {}
+        public void deletingBucket() {}
+
+        public void saveFileTOBucket() {}
+        public void saveFilesToBucket() {}
+        public void deleteFileFromBucket() {}
+        public void deleteFilesFromBucket() {}
+        public void fetchFileFromBucket() {}
+        public void fetchFilesFromBucket() {}
+
+        public void test () {
+            AWSS
+        }
+
+
     }
 
     /**
@@ -160,7 +220,7 @@ public class FileStoreManager {
      * @return the String object
      * */
     private static String downloadUrl(String fileName) {
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path("xyz").path(fileName).toUriString();
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/download/image/file-name=").path(fileName).toUriString();
     }
 
 }

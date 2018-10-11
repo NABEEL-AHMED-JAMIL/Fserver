@@ -8,8 +8,7 @@ import java.util.stream.IntStream;
 
 public class EntityNotFoundException extends RuntimeException {
 
-    public EntityNotFoundException() {
-    }
+    public EntityNotFoundException() { }
 
     public EntityNotFoundException(String message) {
         super(message);

@@ -16,7 +16,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import static com.ballistic.fserver.util.SwaggerMessage.*;
 
-
 // done test 100%
 @Configuration
 @EnableSwagger2

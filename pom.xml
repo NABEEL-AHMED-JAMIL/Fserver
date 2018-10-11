@@ -83,6 +83,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk</artifactId>
+			<version>1.11.327</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
@@ -95,14 +101,32 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<!--<configuration>-->
-					<!--<jvmArguments>-->
-						 <!-- -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005-->
-					<!--</jvmArguments>-->
-				<!--</configuration>-->
+				<configuration>
+					<jvmArguments>
+						  -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005
+					</jvmArguments>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
 
+	<dependencyManagement>
+		<dependencies> <!-- The parent should provide all that -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>2.0.4.RELEASE</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!--<dependency>-->
+				<!--<groupId>com.amazonaws</groupId>-->
+				<!--<artifactId>aws-java-sdk-bom</artifactId>-->
+				<!--<version>1.11.396</version>-->
+				<!--<type>pom</type>-->
+				<!--<scope>import</scope>-->
+			<!--</dependency>-->
+		</dependencies>
+	</dependencyManagement>
 
 </project>

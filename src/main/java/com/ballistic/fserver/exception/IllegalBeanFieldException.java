@@ -2,8 +2,7 @@ package com.ballistic.fserver.exception;
 
 public class IllegalBeanFieldException extends RuntimeException {
 
-    public IllegalBeanFieldException() {
-    }
+    public IllegalBeanFieldException() { }
 
     public IllegalBeanFieldException(String message) {
         super(message);

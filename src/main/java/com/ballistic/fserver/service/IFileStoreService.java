@@ -6,13 +6,14 @@ import java.util.Optional;
 
 public interface IFileStoreService {
 
-    public interface ILocalFileStoreService {
-        public FileInfo storeFile(FileInfo fileInfo);
-        public Optional<FileInfo> loadFileAsResource(String id);
-        public FileInfo deleteFile(FileInfo fileInfo);
-    }
+    public FileInfo storeFile(FileInfo fileInfo);
+    public Optional<FileInfo> loadFileAsResource(String id);
+    public FileInfo deleteFile(FileInfo fileInfo);
+
+    /*
+    public interface ILocalFileStoreService {}
     public interface IServerFileStoreService {
         public void storeFile();
         public void loadFileAsResource();
-    }
+    }*/
 }

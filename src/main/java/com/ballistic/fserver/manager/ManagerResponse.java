@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 
 public class ManagerResponse<T> {
 
+    // Note:- final properties have only getter method
     private final String message;
     private final HttpStatus returnCode;
     private final T entity;
@@ -20,6 +21,7 @@ public class ManagerResponse<T> {
     public HttpStatus getReturnCode() { return returnCode; }
 
     public T getEntity() { return entity; }
+
 
     @Override
     public String toString() {

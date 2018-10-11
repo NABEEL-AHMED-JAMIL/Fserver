@@ -33,7 +33,7 @@
             <AppenderRef ref="FileAppender" />
         </AsyncLogger>
 
-        <Root level="DEBUG">
+        <Root level="INFO">
             <AppenderRef ref="ConsoleAppender" />
             <AppenderRef ref="FileAppender" />
         </Root>

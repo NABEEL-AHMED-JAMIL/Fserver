@@ -1,9 +1,6 @@
 package com.ballistic.fserver.exception.handler;
 
-import com.ballistic.fserver.exception.EntityNotFoundException;
-import com.ballistic.fserver.exception.FileStorageException;
-import com.ballistic.fserver.exception.IllegalBeanFieldException;
-import com.ballistic.fserver.exception.IllegalFileFormatException;
+import com.ballistic.fserver.exception.*;
 import com.ballistic.fserver.exception.bean.ApiError;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -123,6 +120,61 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError);
     }
 
+    /**
+     * Handle HttpMessageNotReadableException. Happens when request JSON is malformed.
+     *
+     * @param ex      HttpMessageNotReadableException
+     * @param headers HttpHeaders
+     * @param status  HttpStatus
+     * @param request WebRequest
+     * @return the ApiError object
+     */
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+                                                                  HttpHeaders headers, HttpStatus status, WebRequest request) {
+        ServletWebRequest servletWebRequest = (ServletWebRequest) request;
+        String error = "Malformed JSON request";
+        logger.error("{} to {} error {}", servletWebRequest.getHttpMethod(),
+                servletWebRequest.getRequest().getServletPath(), error);
+        return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
+    }
+
+    /**
+     * Handle HttpMessageNotWritableException.
+     * Created to encapsulate errors with more detail than HttpMessageNotWritableException.
+     * @param ex      HttpMessageNotWritableException
+     * @l8param headers HttpHeaders
+     * @param status  HttpStatus
+     * @param request WebRequest
+     * @return the ApiError object
+     */
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotWritable(HttpMessageNotWritableException ex,
+                                                                  HttpHeaders headers, HttpStatus status, WebRequest request) {
+        String error = "Error writing JSON output";
+        logger.error("{}", error);
+        return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, error, ex));
+    }
+
+    /**
+     * Handle NoHandlerFoundException.
+     * Created to encapsulate errors with more detail than NoHandlerFoundException.
+     * @param ex NoHandlerFoundException
+     * @param headers HttpHeaders
+     * @param status HttpStatus
+     * @param request WebRequest
+     * @return the ApiError object
+     */
+    @Override
+    protected ResponseEntity<Object> handleNoHandlerFoundException(
+            NoHandlerFoundException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        ApiError apiError = new ApiError(status.BAD_REQUEST);
+        apiError.setMessage(String.format("Could not find the %s method for URL %s", ex.getHttpMethod(), ex.getRequestURL()));
+        apiError.setDebugMessage(ex.getMessage());
+        logger.error("{}", apiError);
+        return buildResponseEntity(apiError);
+    }
+
 
     /**
      * Handles EntityNotFoundException.
@@ -134,6 +186,37 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     protected ResponseEntity<Object> handleEntityNotFound(EntityNotFoundException ex) {
         ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
+        apiError.setMessage(ex.getMessage());
+        logger.error("{}", apiError);
+        return buildResponseEntity(apiError);
+    }
+
+    /**
+     * Handles MyFileNotFoundException.
+     * Created to encapsulate errors with more detail than MyFileNotFoundException.
+     *
+     * @param ex the MyFileNotFoundException
+     * @return the ApiError object
+     */
+    @ExceptionHandler(MyFileNotFoundException.class)
+    public ResponseEntity<Object> fileNotFoundException(MyFileNotFoundException ex) {
+        ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
+        apiError.setMessage(ex.getMessage());
+        logger.error("{}", apiError);
+        return buildResponseEntity(apiError);
+    }
+
+
+    /**
+     * Handles IOException.
+     * Created to encapsulate errors with more detail than IOException.
+     *
+     * @param ex the MyFileNotFoundException
+     * @return the ApiError object
+     */
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<Object> iOException(IOException ex) {
+        ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR);
         apiError.setMessage(ex.getMessage());
         logger.error("{}", apiError);
         return buildResponseEntity(apiError);
@@ -157,9 +240,23 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
 
     /**
+     * Handles InterruptedException.
+     * Created to encapsulate errors with more detail than NullPointerException.
+     * @param ex the InterruptedException
+     * @return the ApiError object
+     */
+    @ExceptionHandler(InterruptedException.class)
+    protected ResponseEntity<Object> handleInterruptedException(InterruptedException ex) {
+        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
+        apiError.setMessage(ex.getMessage());
+        logger.error("{}" + apiError);
+        return buildResponseEntity(apiError);
+    }
+
+
+    /**
      * Handles IllegalFileFormatException.
      * Help to show error related to repository format error
-     *
      * @param ex the EntityNotFoundException
      * @return the ApiError object
      */
@@ -177,7 +274,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
      * Help to show error related to IllegalBean Field format error
      * use the costume parse method for parse the error..
      * to understand this method plz check the method call in AppRestController
-     *
      * @param ex the EntityNotFoundException
      * @return the ApiError object
      */
@@ -223,12 +319,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError);
     }
 
-
     /**
      * Handles FileStorageException.
      * Help to show error related to repository format error
      *
-     * @param ex the EntityNotFoundException
+     * @param ex the FileStorageException
      * @return the ApiError object
      */
     @ExceptionHandler(FileStorageException.class)
@@ -254,63 +349,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("{}", apiError);
         return buildResponseEntity(apiError);
     }
-
-
-    /**
-     * Handle HttpMessageNotReadableException. Happens when request JSON is malformed.
-     *
-     * @param ex      HttpMessageNotReadableException
-     * @param headers HttpHeaders
-     * @param status  HttpStatus
-     * @param request WebRequest
-     * @return the ApiError object
-     */
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
-              HttpHeaders headers, HttpStatus status, WebRequest request) {
-        ServletWebRequest servletWebRequest = (ServletWebRequest) request;
-        String error = "Malformed JSON request";
-        logger.error("{} to {} error {}", servletWebRequest.getHttpMethod(),
-                servletWebRequest.getRequest().getServletPath(), error);
-        return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
-    }
-
-    /**
-     * Handle HttpMessageNotWritableException.
-     *
-     * @param ex      HttpMessageNotWritableException
-     * @l8param headers HttpHeaders
-     * @param status  HttpStatus
-     * @param request WebRequest
-     * @return the ApiError object
-     */
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotWritable(HttpMessageNotWritableException ex,
-              HttpHeaders headers, HttpStatus status, WebRequest request) {
-        String error = "Error writing JSON output";
-        logger.error("{}", error);
-        return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, error, ex));
-    }
-
-    /**
-     * Handle NoHandlerFoundException.
-     *
-     * @param ex
-     * @param headers
-     * @param status
-     * @param request
-     * @return
-     */
-    @Override
-    protected ResponseEntity<Object> handleNoHandlerFoundException(
-            NoHandlerFoundException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        ApiError apiError = new ApiError(status.BAD_REQUEST);
-        apiError.setMessage(String.format("Could not find the %s method for URL %s", ex.getHttpMethod(), ex.getRequestURL()));
-        apiError.setDebugMessage(ex.getMessage());
-        logger.error("{}", apiError);
-        return buildResponseEntity(apiError);
-    }
-
 
     /**
      * Handle DataIntegrityViolationException, inspects the cause for different DB causes.

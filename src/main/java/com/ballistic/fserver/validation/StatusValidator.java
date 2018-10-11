@@ -28,12 +28,12 @@ public class StatusValidator implements ConstraintValidator<StatusValid, String>
                 result = false;
             }
         }else {
+            logger.error("status value {}" + value);
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("Only \"Save\" or \"Delete\" Status Use").
                     addConstraintViolation();
             result = false;
         }
-        logger.debug("Status Type Va");
         return result;
 
     }

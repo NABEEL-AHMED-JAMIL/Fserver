@@ -2,6 +2,7 @@ package com.ballistic.fserver.validation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.ConstraintValidator;
@@ -18,9 +19,9 @@ public class ImageFileValidator implements ConstraintValidator<ValidImage, Multi
     public boolean isValid(MultipartFile multipartFile, ConstraintValidatorContext context) {
         Boolean result = true;
         logger.debug("validation-image-repository");
-        if(multipartFile != null) {
-            String contentType = multipartFile.getContentType();
-            if(!isSupportedContentType(contentType)) {
+        // handle the null if the part-file present not null vlaue
+        if(!ObjectUtils.isEmpty(multipartFile)) {
+            if(!isSupportedContentType(multipartFile.getContentType())) {
                 logger.error("file not a image" + multipartFile.getContentType());
                 context.disableDefaultConstraintViolation();
                 context.buildConstraintViolationWithTemplate("Only PNG or JPG image are allowed.").
@@ -28,12 +29,13 @@ public class ImageFileValidator implements ConstraintValidator<ValidImage, Multi
                 result = false;
             }
         }else {
+            // possible error accrue due to get-Content-Type null
+            logger.error("file object {}" + multipartFile.getContentType());
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("File object null pls enter PNG or JPG image.").
                     addConstraintViolation();
             result = false;
         }
-        logger.debug("file valid image");
         return result;
     }
 

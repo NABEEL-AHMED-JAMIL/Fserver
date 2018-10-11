@@ -24,22 +24,22 @@ public class MongoConfiguration {
 
     @Autowired
     public MongoConfiguration(IFProperties.MongoDbStoreProperties mongoProperties) {
-        logger.info("Mongo-Configuration....");
+        logger.debug("Mongo-Configuration....");
         this.mongoProperties = mongoProperties;
     }
 
     @Primary
     @Bean(name = "fserverMongoTemplate")
     public MongoTemplate fserverMongoTemplate() throws Exception {
-        logger.debug("fserver-mongo-template object init");
+        logger.debug("Fserver-mongo-template object init");
         return new MongoTemplate(fserverFactory(this.mongoProperties.getFserver()));
     }
 
-    @Bean(name = "serverMongoTemplate")
-    public MongoTemplate serverMongoTemplate() throws Exception {
-        logger.debug("server-mongo-template object init");
-        return new MongoTemplate(secondaryFactory(this.mongoProperties.getServer()));
-    }
+//    @Bean(name = "serverMongoTemplate")
+//    public MongoTemplate serverMongoTemplate() throws Exception {
+//        logger.debug("Server-mongo-template object init");
+//        return new MongoTemplate(secondaryFactory(this.mongoProperties.getServer()));
+//    }
 
     @Bean
     @Primary
@@ -48,11 +48,11 @@ public class MongoConfiguration {
         return new SimpleMongoDbFactory(new MongoClient(mongo.getHost(), mongo.getPort()), mongo.getDatabase());
     }
 
-    @Bean
-    public MongoDbFactory secondaryFactory(final MongoProperties mongo) throws Exception {
-        logger.debug("Server Mongodb Properties ==> " + mongo.getHost() + "," + mongo.getPort() + "," + mongo.getDatabase());
-        return new SimpleMongoDbFactory(new MongoClient(mongo.getHost(), mongo.getPort()), mongo.getDatabase());
-    }
+//    @Bean
+//    public MongoDbFactory secondaryFactory(final MongoProperties mongo) throws Exception {
+//        logger.debug("Server Mongodb Properties ==> " + mongo.getHost() + "," + mongo.getPort() + "," + mongo.getDatabase());
+//        return new SimpleMongoDbFactory(new MongoClient(mongo.getHost(), mongo.getPort()), mongo.getDatabase());
+//    }
 
     @EnableMongoRepositories(basePackages = "com.ballistic.fserver.repository", mongoTemplateRef = "fserverMongoTemplate")
     public class PrimaryMongoConfig {

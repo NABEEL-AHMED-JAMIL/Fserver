@@ -13,7 +13,7 @@ public class Account {
     private String email;
     private String password;
     private FileInfo fileInfo;
-    private String status = "save";
+    private String status = "Save";
 
     public Account() { }
 
