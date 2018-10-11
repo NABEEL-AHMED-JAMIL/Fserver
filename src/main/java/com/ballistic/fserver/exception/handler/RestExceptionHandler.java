@@ -79,7 +79,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return this.buildResponseEntity(new ApiError(status.UNSUPPORTED_MEDIA_TYPE, error.toString() , ex));
     }
 
-
     /**
      * @RequestParam(value = "name", required = true, defaultValue = "defaultName") == work
      * @RequestParam(value = "name", defaultValue = "defaultName") == work (default => required = true)
@@ -98,7 +97,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("{}", error);
         return this.buildResponseEntity(new ApiError(status.BAD_REQUEST, error, ex));
      }
-
 
     /**
      * Handle MethodArgumentNotValidException. Triggered when an object fails @Valid validation.
@@ -175,7 +173,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError);
     }
 
-
     /**
      * Handles EntityNotFoundException.
      * Created to encapsulate errors with more detail than javax.persistence.EntityNotFoundException.
@@ -206,7 +203,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError);
     }
 
-
     /**
      * Handles IOException.
      * Created to encapsulate errors with more detail than IOException.
@@ -222,7 +218,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError);
     }
 
-
     /**
      * Handles NullPointerException.
      * Created to encapsulate errors with more detail than NullPointerException.
@@ -236,8 +231,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("{}" + apiError);
         return buildResponseEntity(apiError);
     }
-
-
 
     /**
      * Handles InterruptedException.

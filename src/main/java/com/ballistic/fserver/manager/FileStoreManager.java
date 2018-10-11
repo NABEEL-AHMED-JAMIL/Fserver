@@ -1,5 +1,12 @@
 package com.ballistic.fserver.manager;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.BasicSessionCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
+import com.amazonaws.services.securitytoken.model.Credentials;
+import com.amazonaws.services.securitytoken.model.GetSessionTokenRequest;
 import com.ballistic.fserver.exception.FileStorageException;
 import com.ballistic.fserver.exception.MyFileNotFoundException;
 import com.ballistic.fserver.properties.IFProperties;
@@ -10,11 +17,14 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -24,6 +34,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 
 @Component
@@ -171,6 +182,8 @@ public class FileStoreManager {
         private String defaultBucket;
         private String accessKeyId;
         private String accessKeySecret;
+        private Credentials sessionCredentials;
+
 
         /**
          * Create a new instance of the {@link ServerFileStoreManager} with the bucket name and access credentials
@@ -190,10 +203,6 @@ public class FileStoreManager {
             }
         }
 
-        private void getCredentials() {
-
-        }
-
 
         // Creating, Listing, and Deleting |S3| Buckets
         public void createBucket() {}
@@ -205,13 +214,66 @@ public class FileStoreManager {
         public void deleteFileFromBucket() {}
         public void deleteFilesFromBucket() {}
         public void fetchFileFromBucket() {}
-        public void fetchFilesFromBucket() {}
-
-        public void test () {
-            AWSS
+        public void fetchFilesFromBucket() {
         }
 
+        /**
+         * Get an Amaxon S3 client from basic session credentials
+         *
+         * */
+        public AmazonS3 getAmazonS3Client() {
+            BasicSessionCredentials basicSessionCredentials = getBasicSessionCredentials();
+            // create a new s3 usign the basic session of the service instace
+            return new AmazonS3Client(basicSessionCredentials);
+        }
 
+        /**
+         * Get the basic session credential for the template's configured IAM authentication keys
+         *
+         * */
+        private BasicSessionCredentials getBasicSessionCredentials() {
+
+            // Create a new Session token if the session is expireed or not initialized
+            if(ObjectUtils.isEmpty(this.sessionCredentials) || this.sessionCredentials.getExpiration().before(new Date())) {
+                this.sessionCredentials = getSessionCredentials();
+            }
+            return new BasicSessionCredentials(this.sessionCredentials.getAccessKeyId(),
+                    this.sessionCredentials.getSecretAccessKey(),
+                    this.getSessionCredentials().getSessionToken());
+        }
+
+        /**
+         * Creates a new session credential that is valid for 12 hours
+         */
+        private Credentials getSessionCredentials () {
+            // Create a new session with the user credentials for the service instance
+            AWSSecurityTokenServiceClient stsClient = new AWSSecurityTokenServiceClient(new BasicAWSCredentials(this.accessKeyId, this.accessKeySecret));
+            // Get-Session-Tokent
+            GetSessionTokenRequest getSessionTokenRequest = new GetSessionTokenRequest().withDurationSeconds(43200);
+            // Get the session token for the service instance's bucket
+            this.sessionCredentials = stsClient.getSessionToken(getSessionTokenRequest).getCredentials();
+
+            return sessionCredentials;
+        }
+
+        /**
+         * Convert MultiPartFile to ordinary File
+         *
+         * @param multipartFile
+         * @return
+         * @throws IOException
+         */
+        private CompletableFuture<File> convertFromMultiPart(MultipartFile multipartFile) throws IOException {
+
+            File file = new File(multipartFile.getOriginalFilename());
+            file.createNewFile();
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(multipartFile.getBytes());
+            fos.close();
+            file.getAbsolutePath();
+            //return file;
+            return null;
+        }
     }
 
     /**
